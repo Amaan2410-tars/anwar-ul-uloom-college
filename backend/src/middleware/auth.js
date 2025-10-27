@@ -1,7 +1,6 @@
-const jwt = require('jsonwebtoken')
-const User = require('../models/User')
+const supabase = require('../config/supabase')
 
-// Protect routes - verify JWT token
+// Protect routes - verify Supabase JWT token
 exports.protect = async (req, res, next) => {
   try {
     let token
@@ -19,17 +18,34 @@ exports.protect = async (req, res, next) => {
     }
 
     try {
-      // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET)
+      // Verify token with Supabase
+      const { data: { user }, error } = await supabase.auth.getUser(token)
 
-      // Get user from token
-      req.user = await User.findById(decoded.id)
-
-      if (!req.user) {
+      if (error || !user) {
         return res.status(401).json({
           success: false,
-          message: 'User not found'
+          message: 'Not authorized to access this route'
         })
+      }
+
+      // Get user profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+      if (profileError) {
+        return res.status(401).json({
+          success: false,
+          message: 'User profile not found'
+        })
+      }
+
+      req.user = {
+        id: user.id,
+        email: user.email,
+        ...profile
       }
 
       next()

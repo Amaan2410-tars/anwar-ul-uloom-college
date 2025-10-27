@@ -1,6 +1,6 @@
 require('dotenv').config()
 const express = require('express')
-const mongoose = require('mongoose')
+const supabase = require('./config/supabase')
 const cors = require('cors')
 const helmet = require('helmet')
 const rateLimit = require('express-rate-limit')
@@ -14,8 +14,8 @@ const courseRoutes = require('./routes/courses')
 const departmentRoutes = require('./routes/departments')
 const noticeRoutes = require('./routes/notices')
 const eventRoutes = require('./routes/events')
-const paymentRoutes = require('./routes/payments')
-const certificateRoutes = require('./routes/certificates')
+// const paymentRoutes = require('./routes/payments') // Temporarily disabled
+// const certificateRoutes = require('./routes/certificates') // Temporarily disabled
 
 // Middleware
 app.use(helmet())
@@ -33,13 +33,20 @@ const limiter = rateLimit({
 })
 app.use('/api/', limiter)
 
-// Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/anwarululoom', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-  .then(() => console.log('✅ MongoDB connected successfully'))
-  .catch(err => console.error('❌ MongoDB connection error:', err))
+// Test Supabase connection
+const testSupabaseConnection = async () => {
+  try {
+    const { data, error } = await supabase.auth.getSession()
+    if (error && error.message !== 'Auth session missing!') {
+      throw error
+    }
+    console.log('✅ Supabase connected successfully')
+  } catch (err) {
+    console.error('❌ Supabase connection error:', err.message)
+  }
+}
+
+testSupabaseConnection()
 
 // Routes
 app.use('/api/auth', authRoutes)
@@ -48,8 +55,8 @@ app.use('/api/courses', courseRoutes)
 app.use('/api/departments', departmentRoutes)
 app.use('/api/notices', noticeRoutes)
 app.use('/api/events', eventRoutes)
-app.use('/api/payments', paymentRoutes)
-app.use('/api/certificates', certificateRoutes)
+// app.use('/api/payments', paymentRoutes) // Temporarily disabled
+// app.use('/api/certificates', certificateRoutes) // Temporarily disabled
 
 // Health check
 app.get('/health', (req, res) => {

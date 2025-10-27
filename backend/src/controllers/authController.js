@@ -1,79 +1,76 @@
-const crypto = require('crypto')
-const jwt = require('jsonwebtoken')
-const User = require('../models/User')
-
-// Generate JWT Token
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE || '7d'
-  })
-}
-
-// Generate Refresh Token
-const generateRefreshToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_REFRESH_SECRET, {
-    expiresIn: process.env.JWT_REFRESH_EXPIRE || '30d'
-  })
-}
-
-// Send token response
-const sendTokenResponse = (user, statusCode, res) => {
-  // Create token
-  const token = generateToken(user._id)
-  const refreshToken = generateRefreshToken(user._id)
-
-  // Save refresh token to user
-  user.refreshToken = refreshToken
-  user.save({ validateBeforeSave: false })
-
-  const options = {
-    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production'
-  }
-
-  res.status(statusCode)
-    .cookie('token', token, options)
-    .json({
-      success: true,
-      token,
-      refreshToken,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        studentId: user.studentId
-      }
-    })
-}
+const supabase = require('../config/supabase')
 
 // @desc    Register user
 // @route   POST /api/auth/register
 // @access  Public
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role, studentId } = req.body
+    const { name, email, password, role, studentId, departmentId, courseId, semester, phone, dateOfBirth, address } = req.body
 
-    // Check if user exists
-    const existingUser = await User.findOne({ email })
-    if (existingUser) {
+    // Register user with Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name,
+          role: role || 'student'
+        }
+      }
+    })
+
+    if (authError) {
       return res.status(400).json({
         success: false,
-        message: 'User already exists with this email'
+        message: authError.message
       })
     }
 
-    // Create user
-    const user = await User.create({
-      name,
-      email,
-      password,
-      role: role || 'student',
-      studentId
-    })
+    if (!authData.user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Failed to create user'
+      })
+    }
 
-    sendTokenResponse(user, 201, res)
+    // Create profile in profiles table
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .insert({
+        id: authData.user.id,
+        name,
+        role: role || 'student',
+        student_id: studentId,
+        department_id: departmentId,
+        course_id: courseId,
+        semester,
+        phone,
+        date_of_birth: dateOfBirth,
+        address
+      })
+      .select()
+      .single()
+
+    if (profileError) {
+      // If profile creation fails, we should clean up the auth user
+      await supabase.auth.admin.deleteUser(authData.user.id)
+      return res.status(400).json({
+        success: false,
+        message: 'Failed to create user profile'
+      })
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'User registered successfully. Please check your email for verification.',
+      user: {
+        id: authData.user.id,
+        email: authData.user.email,
+        name: profileData.name,
+        role: profileData.role,
+        studentId: profileData.student_id
+      }
+    })
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -98,27 +95,45 @@ exports.login = async (req, res) => {
       })
     }
 
-    // Check for user
-    const user = await User.findOne({ email }).select('+password')
+    // Login with Supabase Auth
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    })
 
-    if (!user) {
+    if (error) {
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
       })
     }
 
-    // Check if password matches
-    const isMatch = await user.comparePassword(password)
+    // Get user profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', data.user.id)
+      .single()
 
-    if (!isMatch) {
+    if (profileError) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: 'User profile not found'
       })
     }
 
-    sendTokenResponse(user, 200, res)
+    res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      user: {
+        id: data.user.id,
+        email: data.user.email,
+        name: profile.name,
+        role: profile.role,
+        studentId: profile.student_id
+      },
+      session: data.session
+    })
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -128,55 +143,19 @@ exports.login = async (req, res) => {
   }
 }
 
-// @desc    Refresh token
-// @route   POST /api/auth/refresh
-// @access  Public
-exports.refreshToken = async (req, res) => {
-  try {
-    const { refreshToken } = req.body
-
-    if (!refreshToken) {
-      return res.status(401).json({
-        success: false,
-        message: 'Refresh token required'
-      })
-    }
-
-    // Verify refresh token
-    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET)
-
-    // Get user
-    const user = await User.findById(decoded.id)
-
-    if (!user || user.refreshToken !== refreshToken) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid refresh token'
-      })
-    }
-
-    sendTokenResponse(user, 200, res)
-  } catch (error) {
-    res.status(401).json({
-      success: false,
-      message: 'Invalid refresh token'
-    })
-  }
-}
-
-// @desc    Logout user / clear cookie
+// @desc    Logout user
 // @route   POST /api/auth/logout
 // @access  Private
 exports.logout = async (req, res) => {
   try {
-    // Clear refresh token from user
-    req.user.refreshToken = undefined
-    await req.user.save({ validateBeforeSave: false })
-
-    res.cookie('token', 'none', {
-      expires: new Date(Date.now() + 10 * 1000),
-      httpOnly: true
-    })
+    const { error } = await supabase.auth.signOut()
+    
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Logout failed'
+      })
+    }
 
     res.status(200).json({
       success: true,
@@ -195,16 +174,70 @@ exports.logout = async (req, res) => {
 // @access  Private
 exports.getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id)
+    const userId = req.user.id
+
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select(`
+        *,
+        departments(name, code),
+        courses(name, code)
+      `)
+      .eq('id', userId)
+      .single()
+
+    if (error) {
+      return res.status(404).json({
+        success: false,
+        message: 'User profile not found'
+      })
+    }
 
     res.status(200).json({
       success: true,
-      data: user
+      data: profile
     })
   } catch (error) {
     res.status(500).json({
       success: false,
       message: 'Server error'
+    })
+  }
+}
+
+// @desc    Refresh token (handled by Supabase client)
+// @route   POST /api/auth/refresh
+// @access  Public
+exports.refreshToken = async (req, res) => {
+  try {
+    const { refresh_token } = req.body
+
+    if (!refresh_token) {
+      return res.status(401).json({
+        success: false,
+        message: 'Refresh token required'
+      })
+    }
+
+    const { data, error } = await supabase.auth.refreshSession({
+      refresh_token
+    })
+
+    if (error) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid refresh token'
+      })
+    }
+
+    res.status(200).json({
+      success: true,
+      session: data.session
+    })
+  } catch (error) {
+    res.status(401).json({
+      success: false,
+      message: 'Invalid refresh token'
     })
   }
 }
