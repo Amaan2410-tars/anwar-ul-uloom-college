@@ -1,252 +1,232 @@
-# Anwar-ul-Uloom College - University Management System
+# Anwar-ul-Uloom College Website
 
-A comprehensive, production-ready university website and backend management system featuring student portal, admin panel, payment integration, and certificate generation.
+A modern, responsive college website built with React, Tailwind CSS, Node.js, and Express. This project includes a public website, student portal, and admin panel for managing college operations.
 
 ## 🚀 Features
 
+### Public Website
+- **Home Page**: Hero section, statistics, highlights, announcements, and call-to-action
+- **About Page**: College history, mission, vision, core values, and timeline
+- **Academics Page**: Complete course listings (UG, PG, Diploma programs)
+- **Admissions Page**: Online application form with backend integration
+- **Departments Page**: Department information with HOD and faculty details
+- **Contact Page**: Contact form and embedded Google Maps
+
+### Student Portal
+- Student login system
+- Profile dashboard
+- Attendance tracking (dummy data)
+- Results display
+- Notices and announcements feed
+
+### Admin Panel
+- Secure admin login
+- **Manage Students**: View, approve/reject student applications
+- **Manage Departments**: Add, edit, delete departments
+- **Manage Announcements**: Create, edit, delete announcements visible across the site
+
+## 🛠 Tech Stack
+
 ### Frontend
-- **Modern UI** with Next.js 14, React, and Tailwind CSS
-- **Public Pages**: Home, About, Academics, Admissions, Departments, Research, Placements, Campus Life, Contact
-- **Student Portal**: Login, Dashboard, Profile, Course Management
-- **Admin Panel**: User Management, Course Management, Fee Management, Certificate Generation
-- **Responsive Design** with mobile-first approach
-- **Animations** using Framer Motion
-- **Accessibility** features built-in
+- **React 18** with Vite
+- **React Router** for navigation
+- **Tailwind CSS** for styling
+- **Framer Motion** for animations
+- **Axios** for API calls
 
 ### Backend
-- **RESTful API** with Express.js and MongoDB
-- **JWT Authentication** with refresh tokens
-- **Role-based Access Control** (Student, Faculty, Admin)
-- **Razorpay Payment Integration** with webhook support
-- **PDF Certificate Generation** using Puppeteer
-- **File Upload** support with Multer
-- **Rate Limiting & Security** features
-
-## 📋 Prerequisites
-
-- Node.js 18+ and npm
-- MongoDB (local or cloud)
-- Git
-
-## 🛠️ Installation
-
-### 1. Clone the Repository
-
-```bash
-git clone <your-repo-url>
-cd anwar-ul-uloom-college
-```
-
-### 2. Backend Setup
-
-```bash
-cd backend
-npm install
-
-# Create .env file
-cp .env.example .env
-
-# Edit .env with your configuration
-```
-
-Configure your `.env` file:
-
-```env
-NODE_ENV=development
-PORT=5000
-MONGODB_URI=mongodb://localhost:27017/anwarululoom
-JWT_SECRET=your-super-secret-jwt-key
-JWT_REFRESH_SECRET=your-super-secret-refresh-key
-RAZORPAY_KEY_ID=rzp_test_your_key_id
-RAZORPAY_KEY_SECRET=your_razorpay_secret
-RAZORPAY_WEBHOOK_SECRET=your_webhook_secret
-FRONTEND_URL=http://localhost:3000
-```
-
-### 3. Frontend Setup
-
-```bash
-cd ../frontend
-npm install
-```
-
-### 4. Start MongoDB
-
-Make sure MongoDB is running:
-
-```bash
-# Local MongoDB
-mongod
-
-# Or using MongoDB Atlas - update MONGODB_URI in .env
-```
-
-### 5. Seed Database
-
-```bash
-cd backend
-npm run seed
-```
-
-This creates:
-- Admin user: `admin@college.test` / `AdminPass123`
-- Sample students, courses, departments
-
-### 6. Run the Application
-
-**Option 1: Docker (Recommended)**
-
-```bash
-# From root directory
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-```
-
-**Option 2: Manual**
-
-Terminal 1 - Backend:
-```bash
-cd backend
-npm run dev
-```
-
-Terminal 2 - Frontend:
-```bash
-cd frontend
-npm run dev
-```
-
-## 🌐 Access
-
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:5000
-- **Health Check**: http://localhost:5000/health
-
-## 🔐 Default Credentials
-
-After seeding:
-
-- **Admin**
-  - Email: `admin@college.test`
-  - Password: `AdminPass123`
+- **Node.js** with Express
+- **CORS** enabled for frontend-backend communication
+- File-based JSON storage (no database required)
+- RESTful API endpoints
 
 ## 📁 Project Structure
 
 ```
-anwar-ul-uloom-college/
+project/
 ├── frontend/
 │   ├── src/
-│   │   ├── app/              # Next.js app directory
-│   │   ├── components/       # Reusable components
-│   │   └── lib/              # Utilities
-│   ├── public/               # Static files
-│   └── package.json
+│   │   ├── components/     # Reusable components (Navbar, Footer)
+│   │   ├── pages/          # All page components
+│   │   ├── App.jsx         # Main app component with routing
+│   │   ├── main.jsx        # Entry point
+│   │   └── index.css       # Global styles with Tailwind
+│   ├── index.html
+│   ├── package.json
+│   ├── vite.config.js
+│   └── tailwind.config.js
 ├── backend/
-│   ├── src/
-│   │   ├── controllers/      # Request handlers
-│   │   ├── models/           # Mongoose models
-│   │   ├── routes/           # API routes
-│   │   ├── middleware/       # Custom middleware
-│   │   └── utils/            # Helper functions
-│   └── package.json
-├── docker-compose.yml
+│   ├── data/               # JSON data files (auto-generated)
+│   ├── index.js            # Express server and API routes
+│   ├── package.json
+│   └── .gitignore
 └── README.md
 ```
 
-## 🔌 API Endpoints
+## 🔧 Installation & Setup
 
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `POST /api/auth/refresh` - Refresh access token
-- `POST /api/auth/logout` - Logout user
-- `GET /api/auth/me` - Get current user
+### Prerequisites
+- Node.js (v14 or higher)
+- npm or yarn
 
-### Payments (Razorpay)
-- `POST /api/payments/create-order` - Create payment order
-- `POST /api/payments/verify` - Verify payment
-- `POST /api/payments/webhook` - Razorpay webhook handler
-- `GET /api/payments/my-payments` - Get user payments
+### Backend Setup
 
-### Certificates
-- `POST /api/certificates/generate` - Generate PDF certificate (Admin)
-- `GET /api/certificates/:id/download` - Download certificate
-
-## 🔧 Configuration
-
-### Razorpay Setup
-
-1. Create account at https://razorpay.com
-2. Get test keys from Dashboard → Settings → API Keys
-3. Update `.env` with your keys
-4. Configure webhook URL: `http://your-domain.com/api/payments/webhook`
-5. Copy webhook secret to `.env`
-
-### Environment Variables
-
-See `backend/.env.example` for all available variables.
-
-## 🧪 Testing
-
+1. Navigate to the backend directory:
 ```bash
 cd backend
-npm test
 ```
 
-## 📦 Deployment
-
-### Option 1: Docker
-
+2. Install dependencies:
 ```bash
-docker-compose -f docker-compose.prod.yml up -d
+npm install
 ```
 
-### Option 2: Manual Deployment
+3. Create a `.env` file (optional):
+```env
+PORT=5000
+NODE_ENV=development
+```
 
-**Backend (Railway/Render/DigitalOcean)**:
-- Set environment variables
-- Use `npm start` for production
+4. Start the server:
+```bash
+npm start
+# or for development with auto-reload:
+npm run dev
+```
 
-**Frontend (Vercel/Netlify)**:
-- Connect GitHub repo
-- Set `NEXT_PUBLIC_API_URL` environment variable
-- Deploy
+The backend server will run on `http://localhost:5000`
 
-## 🗄️ Database Schema
+### Frontend Setup
 
-Key Models:
-- **User**: Users (students, faculty, admin)
-- **Course**: Academic courses
-- **Department**: Departments
-- **Payment**: Transaction records
-- **Certificate**: Generated certificates
-- **Notice**: Public notices
-- **Event**: College events
+1. Navigate to the frontend directory:
+```bash
+cd frontend
+```
 
-## 🤝 Contributing
+2. Install dependencies:
+```bash
+npm install
+```
 
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
+3. Start the development server:
+```bash
+npm run dev
+```
 
-## 📝 License
+The frontend will run on `http://localhost:3000`
 
-MIT License - see LICENSE file for details
+## 📝 API Endpoints
 
-## 🆘 Support
+### Students
+- `POST /api/students/apply` - Submit admission application
+- `GET /api/students` - Get all students (admin)
+- `PUT /api/students/:id/approve` - Approve student
+- `PUT /api/students/:id/reject` - Reject student
 
-For issues and questions:
-- Open an issue on GitHub
-- Contact: info@anwarululoom.edu
+### Departments
+- `GET /api/departments` - Get all departments
+- `POST /api/departments` - Create department (admin)
+- `PUT /api/departments/:id` - Update department (admin)
+- `DELETE /api/departments/:id` - Delete department (admin)
 
-## 🎓 Credits
+### Announcements
+- `GET /api/announcements` - Get all announcements
+- `POST /api/announcements` - Create announcement (admin)
+- `PUT /api/announcements/:id` - Update announcement (admin)
+- `DELETE /api/announcements/:id` - Delete announcement (admin)
 
-Developed for Anwar-ul-Uloom College with modern web technologies.
+### Contact
+- `POST /api/contact` - Submit contact form
+
+### Admin
+- `POST /api/admin/login` - Admin login
+
+### Health Check
+- `GET /api/health` - Server status
+
+## 🔐 Credentials
+
+### Admin Panel
+- **Username**: `admin@college.com`
+- **Password**: `admin123`
+
+### Student Portal
+- Any email and password can be used for demo purposes
+
+## 🎨 Design Features
+
+- **Color Scheme**: Royal Blue (#0b4da2), White, Light Gray
+- **Font**: Poppins (Google Fonts)
+- **Animations**: Smooth Framer Motion transitions
+- **Responsive**: Fully mobile and tablet friendly
+- **Modern UI**: Clean, minimal design with professional look
+
+## 🚀 Building for Production
+
+### Frontend
+```bash
+cd frontend
+npm run build
+```
+Output: `frontend/dist`
+
+### Backend
+The backend is ready for production deployment. Ensure environment variables are configured.
+
+## 📦 Data Storage
+
+The project uses file-based JSON storage in the `backend/data/` directory. Files are automatically created on first run:
+- `announcements.json`
+- `departments.json`
+- `students.json`
+- `contacts.json`
+
+All data persists across server restarts.
+
+## 🎯 Future Enhancements
+
+- [ ] MongoDB integration for scalable data storage
+- [ ] JWT-based authentication
+- [ ] Email notifications
+- [ ] Payment gateway integration
+- [ ] Certificate generation system
+- [ ] File upload functionality
+- [ ] Advanced search and filtering
+- [ ] Multi-language support
+
+## 📄 License
+
+This project is open source and available for educational purposes.
+
+## 👨‍💻 Development
+
+### Adding New Pages
+1. Create component in `frontend/src/pages/`
+2. Add route in `frontend/src/App.jsx`
+3. Add navigation link in `frontend/src/components/Navbar.jsx`
+
+### Adding New API Endpoints
+1. Add route in `backend/index.js`
+2. Implement logic with readData/writeData helpers
+3. Test with Postman or frontend
+
+## 🐛 Troubleshooting
+
+### Backend Issues
+- Ensure port 5000 is not in use
+- Check if dependencies are installed
+- Verify JSON files in `backend/data/` directory
+
+### Frontend Issues
+- Clear browser cache
+- Ensure backend is running
+- Check API proxy configuration in `vite.config.js`
+
+## 📞 Support
+
+For issues or questions, please check the documentation or open an issue in the repository.
 
 ---
 
-**Note**: Remember to change default passwords and secrets in production!
+**Built with ❤️ for Anwar-ul-Uloom College**
+
