@@ -1,0 +1,13 @@
+services:
+  # Backend API Service
+  - type: web
+    name: anwar-ul-uloom-backend
+    env: node
+    rootDir: backend
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+
